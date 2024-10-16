@@ -7,23 +7,7 @@ generator client {
 
 datasource db {
     provider = "sqlite"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
     url      = env("DATABASE_URL")
-}
-
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
-
-    @@index([name])
 }
 
 // Necessary for Next auth
@@ -33,12 +17,12 @@ model Account {
     type                     String
     provider                 String
     providerAccountId        String
-    refresh_token            String? // @db.Text
-    access_token             String? // @db.Text
+    refresh_token            String?
+    access_token             String?
     expires_at               Int?
     token_type               String?
     scope                    String?
-    id_token                 String? // @db.Text
+    id_token                 String?
     session_state            String?
     user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
     refresh_token_expires_in Int?
@@ -62,7 +46,7 @@ model User {
     image         String?
     accounts      Account[]
     sessions      Session[]
-    posts         Post[]
+    teams         Team[]    @relation("UserTeams")
 }
 
 model VerificationToken {
@@ -71,4 +55,100 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+model Player {
+    id            Int                @id @default(autoincrement())
+    firstName     String
+    lastName      String
+    position      String
+    team          Team?              @relation(fields: [teamId], references: [id])
+    teamId        Int?
+    ballControl   Int
+    dribbling     Int
+    marking       Int
+    slideTackle   Int
+    standTackle   Int
+    aggression    Int
+    reactions     Int
+    attPosition   Int
+    interceptions Int
+    vision        Int
+    composure     Int
+    crossing      Int
+    shortPass     Int
+    longPass      Int
+    acceleration  Int
+    stamina       Int
+    strength      Int
+    balance       Int
+    sprintSpeed   Int
+    agility       Int
+    jumping       Int
+    heading       Int
+    shotPower     Int
+    finishing     Int
+    longShots     Int
+    curve         Int
+    fkAccuracy    Int
+    penalties     Int
+    volleys       Int
+    gkPositioning Int
+    gkDiving      Int
+    gkHandling    Int
+    gkKicking     Int
+    gkReflexes    Int
+    specialities  PlayerSpeciality[]
+    traits        PlayerTrait[]
+}
+
+model Team {
+    id          Int      @id @default(autoincrement())
+    name        String
+    owner       User?    @relation("UserTeams", fields: [ownerId], references: [id])
+    ownerId     String?
+    players     Player[]
+    matchesHome Match[]  @relation("HomeTeam")
+    matchesAway Match[]  @relation("AwayTeam")
+}
+
+model Match {
+    id         Int      @id @default(autoincrement())
+    date       DateTime
+    homeTeam   Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
+    homeTeamId Int
+    awayTeam   Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
+    awayTeamId Int
+    homeScore  Int
+    awayScore  Int
+}
+
+model Speciality {
+    id      Int                @id @default(autoincrement())
+    name    String
+    players PlayerSpeciality[]
+}
+
+model Trait {
+    id      Int           @id @default(autoincrement())
+    name    String
+    players PlayerTrait[]
+}
+
+model PlayerSpeciality {
+    playerId     Int
+    specialityId Int
+    player       Player     @relation(fields: [playerId], references: [id])
+    speciality   Speciality @relation(fields: [specialityId], references: [id])
+
+    @@id([playerId, specialityId])
+}
+
+model PlayerTrait {
+    playerId Int
+    traitId  Int
+    player   Player @relation(fields: [playerId], references: [id])
+    trait    Trait  @relation(fields: [traitId], references: [id])
+
+    @@id([playerId, traitId])
 }
